@@ -1,6 +1,11 @@
 import { type FormEvent, useState } from 'react'
 import './LoginPage.css'
 
+type LoginResponse = {
+  accessToken: string
+  refreshToken: string
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,7 +23,7 @@ export default function LoginPage() {
     try {
       console.log('Šaljem login request...')
 
-      const response = await fetch('/api/Auth/login', {
+      const response = await fetch('/auth-api/api/auth/login', {
         method: 'POST',
         headers: {
           Accept: '*/*',
@@ -32,28 +37,21 @@ export default function LoginPage() {
 
       console.log('Login status:', response.status)
 
-      const raw = await response.text()
-      console.log('Login raw response:', raw)
-
       if (!response.ok) {
         throw new Error(`Prijava nije uspjela. Status: ${response.status}`)
       }
 
-      let parsedData: unknown = {}
+      const data: LoginResponse = await response.json()
+      console.log('Login parsed:', data)
 
-      if (raw) {
-        try {
-          parsedData = JSON.parse(raw)
-        } catch {
-          parsedData = { raw }
-        }
-      }
+      // spremi tokene
+      localStorage.setItem('nkvarazdin_user', JSON.stringify(data))
 
-      localStorage.setItem('nkvarazdin_user', JSON.stringify(parsedData))
-      console.log('Spremljen user u localStorage')
+      // redirect
       window.location.replace('/')
     } catch (err) {
       console.error('Login error:', err)
+
       setError(
         err instanceof Error
           ? err.message
